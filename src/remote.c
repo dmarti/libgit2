@@ -292,7 +292,7 @@ int git_remote_load(git_remote **out, git_repository *repo, const char *name)
 	git_buf_clear(&buf);
 	git_buf_printf(&buf, "remote.%s.pushurl", name);
 
-	if ((error = get_optional_config(config, &buf, NULL, &val)) < 0)
+	if ((error = get_optional_config(config, &buf, NULL, (void *)&val)) < 0)
 		goto cleanup;
 
 	if (val) {
@@ -870,19 +870,6 @@ static int update_tips_for_spec(git_remote *remote, git_refspec *spec, git_vecto
 	if (git_vector_init(&update_heads, 16, NULL) < 0)
 		return -1;
 
-	/* Let's go find HEAD, if it exists. Check only the first ref in the vector. */
-	if (refs->length > 0) {
-		head = git_vector_get(refs, 0);
-
-		if (!strcmp(head->name, GIT_HEAD_FILE))	{
-			if (git_reference_create(&ref, remote->repo, GIT_FETCH_HEAD_FILE, &head->oid, 1) < 0)
-				goto on_error;
-
-			i = 1;
-			git_reference_free(ref);
-		}
-	}
-
 	for (; i < refs->length; ++i) {
 		head = git_vector_get(refs, i);
 		autotag = 0;
@@ -1251,14 +1238,6 @@ static int update_branch_remote_config_entry(
 		update_config_entries_cb, &data);
 }
 
-static int rename_cb(const char *ref, void *data)
-{
-	if (git__prefixcmp(ref, GIT_REFS_REMOTES_DIR))
-		return 0;
-	
-	return git_vector_insert((git_vector *)data, git__strdup(ref));
-}
-
 static int rename_one_remote_reference(
 	git_repository *repo,
 	const char *reference_name,
@@ -1298,16 +1277,29 @@ static int rename_remote_references(
 	int error = -1;
 	unsigned int i;
 	char *name;
+	const char *refname;
+	git_reference_iterator *iter;
 
 	if (git_vector_init(&refnames, 8, NULL) < 0)
+		return -1;
+
+	if (git_reference_iterator_new(&iter, repo) < 0)
 		goto cleanup;
 
-	if (git_reference_foreach(
-		repo,
-		GIT_REF_LISTALL,
-		rename_cb,
-		&refnames) < 0)
-			goto cleanup;
+	while ((error = git_reference_next(&refname, iter)) == 0) {
+		if (git__prefixcmp(refname, GIT_REFS_REMOTES_DIR))
+			continue;
+
+		if ((error = git_vector_insert(&refnames, git__strdup(refname))) < 0)
+			break;
+
+	}
+
+	git_reference_iterator_free(iter);
+	if (error == GIT_ITEROVER)
+		error = 0;
+	else
+		goto cleanup;
 
 	git_vector_foreach(&refnames, i, name) {
 		if ((error = rename_one_remote_reference(repo, name, old_name, new_name)) < 0)

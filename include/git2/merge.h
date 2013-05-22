@@ -33,7 +33,7 @@ typedef enum {
 
 /**
  * Automerge options for `git_merge_trees_opts`.
- */ 
+ */
 typedef enum {
 	GIT_MERGE_AUTOMERGE_NORMAL = 0,
 	GIT_MERGE_AUTOMERGE_NONE = 1,
@@ -45,18 +45,18 @@ typedef enum {
 typedef struct {
 	unsigned int version;
 	git_merge_tree_flags flags;
-	
+
 	/** Similarity to consider a file renamed (default 50) */
 	unsigned int rename_threshold;
-	
+
 	/** Maximum similarity sources to examine (overrides the
 	 * `merge.renameLimit` config) (default 200)
 	 */
 	unsigned int target_limit;
 
-    /** Pluggable similarity metric; pass NULL to use internal metric */
+	/** Pluggable similarity metric; pass NULL to use internal metric */
 	git_diff_similarity_metric *metric;
-	
+
 	/** Flags for automerging content. */
 	git_merge_automerge_flags automerge_flags;
 } git_merge_tree_opts;

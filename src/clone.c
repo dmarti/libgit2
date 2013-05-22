@@ -243,7 +243,6 @@ static int update_head_to_remote(git_repository *repo, git_remote *remote)
 	/* Not master. Check all the other refs. */
 	if (git_reference_foreach(
 		repo,
-		GIT_REF_LISTALL,
 		reference_matches_remote_head,
 		&head_info) < 0)
 			goto cleanup;
@@ -275,7 +274,7 @@ static int update_head_to_branch(
 	int retcode;
 	git_buf remote_branch_name = GIT_BUF_INIT;
 	git_reference* remote_ref = NULL;
-	
+
 	assert(options->checkout_branch);
 
 	if ((retcode = git_buf_printf(&remote_branch_name, GIT_REFS_REMOTES_DIR "%s/%s",
@@ -355,7 +354,7 @@ static int setup_remotes_and_fetch(
 		const git_clone_options *options)
 {
 	int retcode = GIT_ERROR;
-	git_remote *origin;
+	git_remote *origin = NULL;
 
 	/* Construct an origin remote */
 	if ((retcode = create_and_configure_origin(&origin, repo, url, options)) < 0)

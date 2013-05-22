@@ -537,7 +537,7 @@ cleanup:
 static bool diff_time_eq(
 	const git_index_time *a, const git_index_time *b, bool use_nanos)
 {
-	return a->seconds == a->seconds &&
+	return a->seconds == b->seconds &&
 		(!use_nanos || a->nanoseconds == b->nanoseconds);
 }
 
@@ -749,7 +749,8 @@ static int diff_scan_inside_untracked_dir(
 	}
 
 	/* look for actual untracked file */
-	while (!diff->pfxcomp(info->nitem->path, git_buf_cstr(&base))) {
+	while (info->nitem != NULL &&
+		   !diff->pfxcomp(info->nitem->path, git_buf_cstr(&base))) {
 		is_ignored = git_iterator_current_is_ignored(info->new_iter);
 
 		/* need to recurse into non-ignored directories */
@@ -771,7 +772,8 @@ static int diff_scan_inside_untracked_dir(
 	}
 
 	/* finish off scan */
-	while (!diff->pfxcomp(info->nitem->path, git_buf_cstr(&base))) {
+	while (info->nitem != NULL &&
+		   !diff->pfxcomp(info->nitem->path, git_buf_cstr(&base))) {
 		if ((error = git_iterator_advance(&info->nitem, info->new_iter)) < 0)
 			break;
 	}

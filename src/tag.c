@@ -291,6 +291,19 @@ int git_tag_create(
 	return git_tag_create__internal(oid, repo, tag_name, target, tagger, message, allow_ref_overwrite, 1);
 }
 
+int git_tag_annotation_create(
+	git_oid *oid,
+	git_repository *repo,
+	const char *tag_name,
+	const git_object *target,
+	const git_signature *tagger,
+	const char *message)
+{
+	assert(oid && repo && tag_name && target && tagger && message);
+
+	return write_tag_annotation(oid, repo, tag_name, target, tagger, message);
+}
+
 int git_tag_create_lightweight(
 	git_oid *oid,
 	git_repository *repo,
@@ -427,7 +440,7 @@ int git_tag_foreach(git_repository *repo, git_tag_foreach_cb cb, void *cb_data)
 	data.cb_data = cb_data;
 	data.repo = repo;
 
-	return git_reference_foreach(repo, GIT_REF_OID, &tags_cb, &data);
+	return git_reference_foreach(repo, &tags_cb, &data);
 }
 
 typedef struct {

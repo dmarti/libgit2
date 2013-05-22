@@ -14,6 +14,8 @@
 PROJECT(libgit2 C)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
 # Build options
 #
 OPTION( SONAME				"Set the (SO)VERSION of the target"		ON  )
@@ -24,6 +26,7 @@ OPTION( BUILD_EXAMPLES		"Build library usage example apps"		OFF )
 OPTION( TAGS				"Generate tags"							OFF )
 OPTION( PROFILE				"Generate profiling information"		OFF )
 OPTION( ENABLE_TRACE		"Enables tracing support"				OFF )
+OPTION( SONAME_APPEND "Append the given string to the library's filename" OFF )
 IF(MSVC)
 	# This option is only availalbe when building with MSVC. By default,
 	# libgit2 is build using the stdcall calling convention, as that's what
@@ -131,11 +134,22 @@ ENDIF()
 IF (ZLIB_FOUND)
 	INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIRS})
 	LINK_LIBRARIES(${ZLIB_LIBRARIES})
-ELSE()
+	# Fake the message CMake would have shown
+	MESSAGE("-- Found zlib: ${ZLIB_LIBRARY}")
+ELSEIF (NOT ZLIB_LIBRARY)
 	MESSAGE( "zlib was not found; using bundled 3rd-party sources." )
 	INCLUDE_DIRECTORIES(deps/zlib)
 	ADD_DEFINITIONS(-DNO_VIZ -DSTDC -DNO_GZIP)
 	FILE(GLOB SRC_ZLIB deps/zlib/*.c)
+ENDIF()
+
+IF(NOT LIBSSH2_LIBRARY)
+	FIND_PACKAGE(LIBSSH2 QUIET)
+ENDIF()
+IF (LIBSSH2_FOUND)
+	ADD_DEFINITIONS(-DGIT_SSH)
+	INCLUDE_DIRECTORIES(${LIBSSH2_INCLUDE_DIR})
+	SET(SSH_LIBRARIES ${LIBSSH2_LIBRARIES})
 ENDIF()
 
 # Platform specific compilation flags
@@ -289,6 +303,7 @@ ENDIF()
 # Compile and link libgit2
 ADD_LIBRARY(git2 ${SRC_GIT2} ${SRC_OS} ${SRC_ZLIB} ${SRC_HTTP} ${SRC_REGEX} ${SRC_SHA1} ${WIN_RC})
 TARGET_LINK_LIBRARIES(git2 ${SSL_LIBRARIES})
+TARGET_LINK_LIBRARIES(git2 ${SSH_LIBRARIES})
 TARGET_OS_LIBRARIES(git2)
 
 # Workaround for Cmake bug #0011240 (see http://public.kitware.com/Bug/view.php?id=11240)
@@ -302,6 +317,9 @@ MSVC_SPLIT_SOURCES(git2)
 IF (SONAME)
 	SET_TARGET_PROPERTIES(git2 PROPERTIES VERSION ${LIBGIT2_VERSION_STRING})
 	SET_TARGET_PROPERTIES(git2 PROPERTIES SOVERSION ${LIBGIT2_VERSION_MAJOR})
+	IF (SONAME_APPEND)
+		SET_TARGET_PROPERTIES(git2 PROPERTIES OUTPUT_NAME "git2-${SONAME_APPEND}")
+	ENDIF()
 ENDIF()
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/libgit2.pc.in ${CMAKE_CURRENT_BINARY_DIR}/libgit2.pc @ONLY)
 
@@ -349,6 +367,7 @@ IF (BUILD_CLAR)
 	ADD_EXECUTABLE(libgit2_clar ${SRC_GIT2} ${SRC_OS} ${SRC_CLAR} ${SRC_TEST} ${SRC_ZLIB} ${SRC_HTTP} ${SRC_REGEX} ${SRC_SHA1})
 
 	TARGET_LINK_LIBRARIES(libgit2_clar ${SSL_LIBRARIES})
+	TARGET_LINK_LIBRARIES(libgit2_clar ${SSH_LIBRARIES})
 	TARGET_OS_LIBRARIES(libgit2_clar)
 	MSVC_SPLIT_SOURCES(libgit2_clar)
 

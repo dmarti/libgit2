@@ -190,9 +190,24 @@ GIT_EXTERN(int) git_config_open_ondisk(git_config **out, const char *path);
  * multi-level parent config, or an error code
  */
 GIT_EXTERN(int) git_config_open_level(
-    git_config **out,
-    const git_config *parent,
-    unsigned int level);
+	git_config **out,
+	const git_config *parent,
+	unsigned int level);
+
+/**
+ * Open the global/XDG configuration file according to git's rules
+ *
+ * Git allows you to store your global configuration at
+ * `$HOME/.config` or `$XDG_CONFIG_HOME/git/config`. For backwards
+ * compatability, the XDG file shouldn't be used unless the use has
+ * created it explicitly. With this function you'll open the correct
+ * one to write to.
+ *
+ * @param out pointer in which to store the config object
+ * @param config the config object in which to look
+ */
+GIT_EXTERN(int) git_config_open_global(git_config **out, git_config *config);
+
 
 /**
  * Reload changed config files
@@ -444,11 +459,11 @@ GIT_EXTERN(int) git_config_foreach_match(
  * @return 0 on success, error code otherwise
  */
 GIT_EXTERN(int) git_config_get_mapped(
-      int *out,
-      const git_config *cfg,
-      const char *name,
-      const git_cvar_map *maps,
-      size_t map_n);
+	int *out,
+	const git_config *cfg,
+	const char *name,
+	const git_cvar_map *maps,
+	size_t map_n);
 
 /**
  * Maps a string value to an integer constant

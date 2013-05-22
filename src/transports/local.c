@@ -124,7 +124,7 @@ static int store_refs(transport_local *t)
 
 	assert(t);
 
-	if (git_reference_list(&ref_names, t->repo, GIT_REF_LISTALL) < 0 ||
+	if (git_reference_list(&ref_names, t->repo) < 0 ||
 		git_vector_init(&t->refs, ref_names.count, NULL) < 0)
 		goto on_error;
 
@@ -348,7 +348,7 @@ static int local_push(
 	if ((error = git_repository_open(&remote_repo, push->remote->url)) < 0)
 		return error;
 
-	/* We don't currently support pushing locally to non-bare repos. Proper 
+	/* We don't currently support pushing locally to non-bare repos. Proper
 	   non-bare repo push support would require checking configs to see if
 	   we should override the default 'don't let this happen' behavior */
 	if (!remote_repo->is_bare) {
@@ -495,7 +495,7 @@ static int local_download_pack(
 			/* Tag or some other wanted object. Add it on its own */
 			error = git_packbuilder_insert(pack, &rhead->oid, rhead->name);
 		}
-      git_object_free(obj);
+		git_object_free(obj);
 	}
 
 	/* Walk the objects, building a packfile */

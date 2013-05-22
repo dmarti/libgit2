@@ -594,6 +594,10 @@ int git_repository_config__weakptr(git_config **out, git_repository *repo)
 		git_config_find_xdg_r(&xdg_buf);
 		git_config_find_system_r(&system_buf);
 
+		/* If there is no global file, open a backend for it anyway */
+		if (git_buf_len(&global_buf) == 0)
+			git_config__global_location(&global_buf);
+
 		error = load_config(
 			&config, repo,
 			path_unless_empty(&global_buf),
@@ -1469,7 +1473,7 @@ static int at_least_one_cb(const char *refname, void *payload)
 
 static int repo_contains_no_reference(git_repository *repo)
 {
-	int error = git_reference_foreach(repo, GIT_REF_LISTALL, at_least_one_cb, NULL);
+	int error = git_reference_foreach(repo, at_least_one_cb, NULL);
 
 	if (error == GIT_EUSER)
 		return 0;
@@ -1592,6 +1596,9 @@ int git_repository_message(char *buffer, size_t len, git_repository *repo)
 	struct stat st;
 	int error;
 
+	if (buffer != NULL)
+		*buffer = '\0';
+
 	if (git_buf_joinpath(&path, repo->path_repository, GIT_MERGE_MSG_FILE) < 0)
 		return -1;
 
@@ -1629,11 +1636,11 @@ int git_repository_message_remove(git_repository *repo)
 }
 
 int git_repository_hashfile(
-    git_oid *out,
-    git_repository *repo,
-    const char *path,
-    git_otype type,
-    const char *as_path)
+	git_oid *out,
+	git_repository *repo,
+	const char *path,
+	git_otype type,
+	const char *as_path)
 {
 	int error;
 	git_vector filters = GIT_VECTOR_INIT;
