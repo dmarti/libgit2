@@ -673,6 +673,10 @@ void git__qsort_r(
 	void *els, size_t nel, size_t elsize, git__sort_r_cmp cmp, void *payload)
 {
 #if defined(__MINGW32__) || defined(__OpenBSD__)
+#define USE_OWN_INSERTSORT_R 1
+#endif
+
+#if defined(USE_OWN_INSERTSORT_R)
 	git__insertsort_r(els, nel, elsize, NULL, cmp, payload);
 #elif defined(GIT_WIN32)
 	git__qsort_r_glue glue = { cmp, payload };

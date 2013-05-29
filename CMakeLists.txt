@@ -24,6 +24,8 @@ OPTION( BUILD_EXAMPLES		"Build library usage example apps"		OFF )
 OPTION( TAGS				"Generate tags"							OFF )
 OPTION( PROFILE				"Generate profiling information"		OFF )
 OPTION( ENABLE_TRACE		"Enables tracing support"				OFF )
+OPTION( USE_OWN_INSERTSORT_R	"Use the built-in replacement for qsort_r"
+	ON )
 IF(MSVC)
 	# This option is only availalbe when building with MSVC. By default,
 	# libgit2 is build using the stdcall calling convention, as that's what
@@ -90,6 +92,10 @@ SET(LIBGIT2_VERSION_STRING "${LIBGIT2_VERSION_MAJOR}.${LIBGIT2_VERSION_MINOR}.${
 
 # Find required dependencies
 INCLUDE_DIRECTORIES(src include)
+
+IF (USE_OWN_INSERTSORT_R)
+	ADD_DEFINITIONS(-DUSE_OWN_INSERTSORT_R)
+ENDIF()
 
 IF (WIN32 AND NOT MINGW)
 	ADD_DEFINITIONS(-DGIT_WINHTTP)
