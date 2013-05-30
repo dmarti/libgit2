@@ -25,7 +25,7 @@ OPTION( TAGS				"Generate tags"							OFF )
 OPTION( PROFILE				"Generate profiling information"		OFF )
 OPTION( ENABLE_TRACE		"Enables tracing support"				OFF )
 OPTION( USE_OWN_INSERTSORT_R	"Use the built-in replacement for qsort_r"
-	ON )
+	OFF )
 IF(MSVC)
 	# This option is only availalbe when building with MSVC. By default,
 	# libgit2 is build using the stdcall calling convention, as that's what
