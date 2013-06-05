@@ -6,7 +6,6 @@
 # For full terms see the included COPYING file.
 #
 
-from __future__ import with_statement
 from string import Template
 import re, fnmatch, os, codecs, pickle
 
@@ -75,7 +74,10 @@ class Module(object):
 
         def _replacer(match):
             s = match.group(0)
-            return "" if s.startswith('/') else s
+            if s.startswith('/'):
+                return ""
+            else:
+                return s
 
         return re.sub(SKIP_COMMENTS_REGEX, _replacer, text)
 
@@ -118,8 +120,9 @@ class Module(object):
             self.modified = True
             self.mtime = st.st_mtime
 
-            with open(path) as fp:
-                raw_content = fp.read()
+            fp = open(path)
+            raw_content = fp.read()
+            fp.close()
 
         except IOError:
             return False
@@ -130,6 +133,7 @@ class TestSuite(object):
 
     def __init__(self, path):
         self.path = path
+        self.modules = {}
 
     def should_generate(self, path):
         if not os.path.isfile(path):
@@ -153,7 +157,6 @@ class TestSuite(object):
                 module_name = "_".join(module_root + [test_file[:-2]])
 
                 modules.append((full_path, module_name))
-
         return modules
 
     def load_cache(self):
@@ -171,12 +174,16 @@ class TestSuite(object):
 
     def save_cache(self):
         path = os.path.join(self.path, '.clarcache')
-        with open(path, 'wb') as cache:
-            pickle.dump(self.modules, cache)
+        cache = open(path, 'wb')
+        pickle.dump(self.modules, cache)
+        cache.close()
 
     def load(self, force = False):
         module_data = self.find_modules()
-        self.modules = {} if force else self.load_cache()
+        if force:
+            self.modules = {}
+        else:
+            self.load_cache()
 
         for path, name in module_data:
             if name not in self.modules:
@@ -205,7 +212,8 @@ class TestSuite(object):
         if not self.should_generate(output):
             return False
 
-        with open(output, 'w') as data:
+        try:
+            data = open(output, 'w')
             for module in self.modules.values():
                 t = Module.DeclarationTemplate(module)
                 data.write(t.render())
@@ -222,7 +230,9 @@ class TestSuite(object):
 
             data.write("static const size_t _clar_suite_count = %d;\n" % self.suite_count())
             data.write("static const size_t _clar_callback_count = %d;\n" % self.callback_count())
-
+        finally:
+            data.close()
+    
         suite.save_cache()
         return True
 
